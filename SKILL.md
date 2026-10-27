@@ -1,7 +1,7 @@
 ---
 name: simplicity-lens
 description: "Review and critique software designs through five distilled simplicity lenses (Pike/Hickey/Martens/antirez/Armstrong/Victor/Ousterhout/esr), backed by a 198-strategy SQLite reference archive with provenance. Prompt for direction, DB for evidence — no RAG."
-version: 1.0.0
+version: 1.1.0
 author: rafael faint
 license: MIT
 platforms: [linux, macos, windows]
@@ -108,6 +108,27 @@ Three query paths — combine as needed:
 - **By category** (systematic sweep of one lens)
 - **By thinker** (one person's position, including their context_hints)
 - **By keyword** (concept-centered)
+
+### Query discipline (output budget)
+
+The archive is 198 rows / ~195 KB of text. A bare `SELECT *` emits
+~195K chars, which overflows typical agent tool-output caps (~16K) and
+is silently truncated — leaving a biased ~16-row sample. Sized queries
+instead:
+
+- **Table of contents first** (one call, fits any budget):
+  `SELECT id, strategy_name, thinker, category FROM strategies`
+  (~10K chars for all 198 rows)
+- **One lens sweep**: 50 rows x (name, one_liner) ~ 20K — fine, but
+  defer `content`: fetch it for the 3-5 rows you actually need via
+  `WHERE id IN (...)`
+- **Never** `SELECT content` (or `SELECT *`) without a WHERE clause.
+- If an output was truncated anyway, narrow columns or add LIMIT and
+  re-query — never reason from a truncated sample (you cannot tell
+  which rows were cut).
+
+This is a reference, not a knowledge base: no RAG, no bulk dump —
+targeted reads driven by your own five-lens analysis.
 
 ### Step 3: Produce structured output
 
